@@ -1,0 +1,74 @@
+trigger:
+- nonroot     
+pool:
+  name: self-hosted-linux  
+
+variables:
+  buildConfiguration: Release
+  publishDir: publish
+  imageName: myapp
+  imageTag: $(Build.BuildId)
+
+stages:
+
+- stage: Build_And_Scan
+  displayName: Build, Dockerize & Scan
+
+  jobs:
+  - job: BuildDocker
+    displayName: Build .NET + Docker + Security Scan
+
+    steps:
+
+    # ✅ Checkout source
+    - checkout: self
+
+    # ✅ Ensure .NET SDK
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.0'
+
+    # ✅ Restore dependencies
+    - script: |
+        echo "Restoring dependencies..."
+        dotnet restore
+      displayName: Restore
+
+    # ✅ Build solution
+    - script: |
+        echo "Building solution..."
+        dotnet build --configuration $(buildConfiguration) --no-restore
+      displayName: Build
+
+    # ✅ Publish application
+    - script: |
+        echo "Publishing application..."
+        dotnet publish --configuration $(buildConfiguration) \
+                      --output $(publishDir) \
+                      --no-build
+      displayName: Publish
+
+    # ✅ Trivy Filesystem Scan (Source Code + Packages)
+    - script: |
+        echo "Running Trivy FS scan..."
+        trivy fs \
+          --exit-code 1 \
+          --severity HIGH,CRITICAL \
+          .
+      displayName: Trivy FS Scan
+
+    # ✅ Build Docker Image
+    - script: |
+        echo "Building Docker image..."
+        docker build -t $(imageName):$(imageTag) .
+      displayName: Docker Build
+
+    # ✅ Trivy Image Scan 
+    - script: |
+        echo "Running Trivy image scan..."
+        trivy image \
+          --exit-code 1 \
+          --severity HIGH,CRITICAL \
+          $(imageName):$(imageTag)
+      displayName: Trivy Image Scan
