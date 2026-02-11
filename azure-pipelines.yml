@@ -77,11 +77,11 @@ stages:
         docker ps
       displayName: Docker Diagnostics
     - script: |
-        echo "Docker access test inside pipeline"
-        whoami
-        groups
-        docker ps
-      displayName: Pipeline Docker Test
+       echo "Checking if image exists before Trivy scan..."
+       docker images
+       docker images | grep $(imageName) || echo "IMAGE NOT FOUND"
+      displayName: Confirm Image Exists
+
 
     # Trivy Image Scan (FIXED INDENTATION)
     - script: |
