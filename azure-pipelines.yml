@@ -59,30 +59,6 @@ stages:
         docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    # Verify Image & Variables
-    - script: |
-        echo "Verifying Docker image..."
-        echo "Image Name: $(imageName)"
-        echo "Image Tag: $(imageTag)"
-        echo "Full Image: $(imageName):$(imageTag)"
-        docker images
-      displayName: Verify Image
-
-    # Docker Diagnostics
-    - script: |
-        echo "Docker diagnostics..."
-        whoami
-        groups
-        ls -l /var/run/docker.sock || true
-        docker ps
-      displayName: Docker Diagnostics
-    - script: |
-       echo "Checking if image exists before Trivy scan..."
-       docker images
-       docker images | grep $(imageName) || echo "IMAGE NOT FOUND"
-      displayName: Confirm Image Exists
-
-
     # Trivy Image Scan (FIXED INDENTATION)
     - script: |
         echo "Running Trivy image scan..."
