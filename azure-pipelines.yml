@@ -24,39 +24,34 @@ stages:
     # ✅ Checkout source
     - checkout: self
 
-    # ✅ Ensure .NET SDK
+    # ✅ Install .NET SDK
     - task: UseDotNet@2
       inputs:
-        packageType: 'sdk'
-        version: '8.0.x'
+        packageType: sdk
+        version: 8.0.x
 
-    # ✅ Restore dependencies
+    # ✅ Restore
     - script: |
         echo "Restoring dependencies..."
         dotnet restore
       displayName: Restore
 
-    # ✅ Build solution
+    # ✅ Build
     - script: |
         echo "Building solution..."
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    # ✅ Publish application
+    # ✅ Publish
     - script: |
         echo "Publishing application..."
-        dotnet publish --configuration $(buildConfiguration) \
-                      --output $(publishDir) \
-                      --no-build
+        dotnet publish --configuration $(buildConfiguration) --output $(publishDir) --no-build
       displayName: Publish
 
-    # ✅ Trivy Filesystem Scan (Source Code + Packages)
+    # ✅ Trivy Filesystem Scan
     - script: |
-        echo "Running Trivy FS scan..."
-        trivy fs \
-          --exit-code 1 \
-          --severity HIGH,CRITICAL \
-          .
+        echo "Running Trivy filesystem scan..."
+        trivy fs --exit-code 1 --severity HIGH,CRITICAL .
       displayName: Trivy FS Scan
 
     # ✅ Build Docker Image
@@ -65,22 +60,26 @@ stages:
         docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    # ✅ Docker Diagnostics (VERY USEFUL for permission issues)
+    #  Verify Image & Variables 
+    - script: |
+        echo "Verifying Docker image..."
+        echo "Image Name: $(imageName)"
+        echo "Image Tag: $(imageTag)"
+        echo "Full Image: $(imageName):$(imageTag)"
+        docker images
+      displayName: Verify Image
+
+    #  Docker Permission Diagnostics 
     - script: |
         echo "Docker diagnostics..."
         whoami
         groups
         ls -l /var/run/docker.sock || true
-        docker images
+        docker ps
       displayName: Docker Diagnostics
 
-    # ✅ Trivy Image Scan (CORRECTED)
+    #  Trivy Image Scan 
     - script: |
         echo "Running Trivy image scan..."
-        trivy image \
-          --runtime docker \
-          --scanners vuln \
-          --exit-code 1 \
-          --severity HIGH,CRITICAL \
-          $(imageName):$(imageTag)
+        trivy image --runtime docker --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
