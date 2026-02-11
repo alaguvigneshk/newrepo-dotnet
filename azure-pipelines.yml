@@ -68,4 +68,4 @@ stages:
     - script: |
         echo "Running Trivy image scan..."
         trivy image $(imageName):$(imageTag)
-      displayName: Trivy Image Scan
+        echo " $(imageName):$(imageTag)"
