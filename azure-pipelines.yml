@@ -50,8 +50,14 @@ stages:
                       --no-build
       displayName: Publish
 
-   
-
+    # ✅ Trivy Filesystem Scan (Source Code + Packages)
+    - script: |
+        echo "Running Trivy FS scan..."
+        trivy fs \
+          --exit-code 1 \
+          --severity HIGH,CRITICAL \
+          .
+      displayName: Trivy FS Scan
 
     # ✅ Build Docker Image
     - script: |
@@ -64,5 +70,17 @@ stages:
         echo "Docker diagnostics..."
         whoami
         groups
-        ls -l /var/run/docker.sock || tr
+        ls -l /var/run/docker.sock || true
+        docker images
+      displayName: Docker Diagnostics
 
+    # ✅ Trivy Image Scan (CORRECTED)
+    - script: |
+        echo "Running Trivy image scan..."
+        trivy image \
+          --runtime docker \
+          --scanners vuln \
+          --exit-code 1 \
+          --severity HIGH,CRITICAL \
+          $(imageName):$(imageTag)
+      displayName: Trivy Image Scan
