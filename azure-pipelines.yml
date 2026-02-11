@@ -81,5 +81,5 @@ stages:
     #  Trivy Image Scan 
     - script: |
         echo "Running Trivy image scan..."
-        trivy image --runtime docker --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
+       trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
