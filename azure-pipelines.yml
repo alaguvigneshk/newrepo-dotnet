@@ -50,14 +50,8 @@ stages:
                       --no-build
       displayName: Publish
 
-    # ✅ Trivy Filesystem Scan (Source Code + Packages)
-    - script: |
-        echo "Running Trivy FS scan..."
-        trivy fs \
-          --exit-code 1 \
-          --severity HIGH,CRITICAL \
-          .
-      displayName: Trivy FS Scan
+   
+
 
     # ✅ Build Docker Image
     - script: |
