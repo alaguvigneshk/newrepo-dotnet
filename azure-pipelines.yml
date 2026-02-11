@@ -11,7 +11,6 @@ variables:
   imageTag: $(Build.BuildId)
 
 stages:
-
 - stage: Build_And_Scan
   displayName: Build, Dockerize & Scan
 
@@ -21,46 +20,46 @@ stages:
 
     steps:
 
-    # ✅ Checkout source
+    # Checkout source
     - checkout: self
 
-    # ✅ Install .NET SDK
+    # Install .NET SDK
     - task: UseDotNet@2
       inputs:
         packageType: sdk
         version: 8.0.x
 
-    # ✅ Restore
+    # Restore
     - script: |
         echo "Restoring dependencies..."
         dotnet restore
       displayName: Restore
 
-    # ✅ Build
+    # Build
     - script: |
         echo "Building solution..."
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    # ✅ Publish
+    # Publish
     - script: |
         echo "Publishing application..."
         dotnet publish --configuration $(buildConfiguration) --output $(publishDir) --no-build
       displayName: Publish
 
-    # ✅ Trivy Filesystem Scan
+    # Trivy Filesystem Scan
     - script: |
         echo "Running Trivy filesystem scan..."
         trivy fs --exit-code 1 --severity HIGH,CRITICAL .
       displayName: Trivy FS Scan
 
-    # ✅ Build Docker Image
+    # Build Docker Image
     - script: |
         echo "Building Docker image..."
         docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    #  Verify Image & Variables 
+    # Verify Image & Variables
     - script: |
         echo "Verifying Docker image..."
         echo "Image Name: $(imageName)"
@@ -69,7 +68,7 @@ stages:
         docker images
       displayName: Verify Image
 
-    #  Docker Permission Diagnostics 
+    # Docker Diagnostics
     - script: |
         echo "Docker diagnostics..."
         whoami
@@ -78,8 +77,8 @@ stages:
         docker ps
       displayName: Docker Diagnostics
 
-    #  Trivy Image Scan 
+    # Trivy Image Scan (FIXED INDENTATION)
     - script: |
         echo "Running Trivy image scan..."
-       trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
+        trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
