@@ -67,5 +67,5 @@ stages:
     # ✅ Trivy Image Scan 
     - script: |
         echo "Running Trivy image scan..."
-        trivy image $(imageName):$(imageTag)
+       trivy image --runtime docker --scanners vuln myapp:$(imageTag)
         echo " $(imageName):$(imageTag)"
