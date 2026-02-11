@@ -67,8 +67,5 @@ stages:
     # ✅ Trivy Image Scan 
     - script: |
         echo "Running Trivy image scan..."
-        trivy image \
-          --exit-code 0 \
-          --severity HIGH,CRITICAL \
-          $(imageName):$(imageTag)
+        trivy image $(imageName):$(imageTag)
       displayName: Trivy Image Scan
