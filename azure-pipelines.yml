@@ -1,7 +1,8 @@
 trigger:
-- nonroot     
+- nonroot
+
 pool:
-  name: default 
+  name: default
 
 variables:
   buildConfiguration: Release
@@ -64,8 +65,10 @@ stages:
         docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    # ✅ Trivy Image Scan 
+    # ✅ Docker Diagnostics (VERY USEFUL for permission issues)
     - script: |
-        echo "Running Trivy image scan..."
-       trivy image --runtime docker --scanners vuln myapp:$(imageTag)
-        echo " $(imageName):$(imageTag)"
+        echo "Docker diagnostics..."
+        whoami
+        groups
+        ls -l /var/run/docker.sock || tr
+
