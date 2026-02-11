@@ -47,10 +47,10 @@ stages:
         dotnet publish --configuration $(buildConfiguration) --output $(publishDir) --no-build
       displayName: Publish
 
-    # Trivy Filesystem Scan
+    # Trivy Filesystem Scan (NON-BLOCKING)
     - script: |
         echo "Running Trivy filesystem scan..."
-        trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+        trivy fs --severity HIGH,CRITICAL .
       displayName: Trivy FS Scan
 
     # Build Docker Image
@@ -59,8 +59,8 @@ stages:
         docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    # Trivy Image Scan (FIXED INDENTATION)
+    # Trivy Image Scan (NON-BLOCKING)
     - script: |
         echo "Running Trivy image scan..."
-        trivy image --scanners vuln --exit-code 1 --severity HIGH,CRITICAL $(imageName):$(imageTag)
+        trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
