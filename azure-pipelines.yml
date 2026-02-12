@@ -10,9 +10,13 @@ variables:
   imageName: myapp
   imageTag: $(Build.BuildId)
 
+  # ✅ ACR Details
+  acrName: demodotnet
+  acrLoginServer: demodotnet.azurecr.io
+
 stages:
 - stage: Build_And_Scan
-  displayName: Build, Dockerize & Scan
+  displayName: Build, Dockerize, Scan & Push
 
   jobs:
   - job: BuildDocker
@@ -64,3 +68,36 @@ stages:
         echo "Running Trivy image scan..."
         trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
+
+    # ✅ Azure Login (via Service Connection)
+    - task: AzureCLI@2
+      displayName: Azure Login
+      inputs:
+        azureSubscription: 'Azure-Service-Connection'   # 🔴 CHANGE IF NEEDED
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Logged into Azure"
+
+    # ✅ Login to ACR
+    - task: AzureCLI@2
+      displayName: ACR Login
+      inputs:
+        azureSubscription: 'Azure-Service-Connection'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Logging into ACR..."
+          az acr login --name $(acrName)
+
+    # ✅ Tag Image for ACR
+    - script: |
+        echo "Tagging image for ACR..."
+        docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
+      displayName: Tag Image for ACR
+
+    # ✅ Push Image to ACR
+    - script: |
+        echo "Pushing image to ACR..."
+        docker push $(acrLoginServer)/$(imageName):$(imageTag)
+      displayName: Push Image to ACR
