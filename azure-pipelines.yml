@@ -10,17 +10,17 @@ variables:
   imageName: myapp
   imageTag: $(Build.BuildId)
 
-  # ✅ ACR Details
+  # ✅ ACR Settings
   acrName: demodotnet
   acrLoginServer: demodotnet.azurecr.io
 
 stages:
-- stage: Build_And_Scan
-  displayName: Build, Dockerize, Scan & Push
+- stage: Build_And_Push
+  displayName: Build, Scan & Push to ACR
 
   jobs:
   - job: BuildDocker
-    displayName: Build .NET + Docker + Security Scan
+    displayName: Build .NET + Docker + Trivy Scan + Push
 
     steps:
 
@@ -69,7 +69,7 @@ stages:
         trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
 
-    # ✅ Azure Login (via Service Connection)
+    # ✅ Azure Login
     - task: AzureCLI@2
       displayName: Azure Login
       inputs:
@@ -79,24 +79,29 @@ stages:
         inlineScript: |
           echo "Logged into Azure"
 
-    # ✅ Login to ACR
+    # ✅ EXPLICIT DOCKER LOGIN (CRITICAL FIX)
     - task: AzureCLI@2
-      displayName: ACR Login
+      displayName: Docker Login to ACR
       inputs:
         azureSubscription: 'Azure-Service-Connection'
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          echo "Logging into ACR..."
-          az acr login --name $(acrName)
+          echo "Fetching ACR credentials..."
 
-    # ✅ Tag Image for ACR
+          USERNAME=$(az acr credential show --name $(acrName) --query username -o tsv)
+          PASSWORD=$(az acr credential show --name $(acrName) --query passwords[0].value -o tsv)
+
+          echo "Logging Docker into ACR..."
+          docker login $(acrLoginServer) -u $USERNAME -p $PASSWORD
+
+    # Tag Image for ACR
     - script: |
         echo "Tagging image for ACR..."
         docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
       displayName: Tag Image for ACR
 
-    # ✅ Push Image to ACR
+    # Push Image to ACR
     - script: |
         echo "Pushing image to ACR..."
         docker push $(acrLoginServer)/$(imageName):$(imageTag)
