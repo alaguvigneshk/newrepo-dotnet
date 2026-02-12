@@ -10,7 +10,7 @@ variables:
   imageName: myapp
   imageTag: $(Build.BuildId)
 
-  # ✅ ACR Settings
+  #ACR Settings
   acrName: demodotnet
   acrLoginServer: demodotnet.azurecr.io
 
@@ -69,17 +69,17 @@ stages:
         trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
       displayName: Trivy Image Scan
 
-    # ✅ Azure Login
+    #  Azure Login
     - task: AzureCLI@2
       displayName: Azure Login
       inputs:
-        azureSubscription: 'Azure-Service-Connection'   # 🔴 CHANGE IF NEEDED
+        azureSubscription: 'Azure-Service-Connection' 
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
           echo "Logged into Azure"
 
-    # ✅ EXPLICIT DOCKER LOGIN (CRITICAL FIX)
+    #  EXPLICIT DOCKER LOGIN (CRITICAL FIX)
     - task: AzureCLI@2
       displayName: Docker Login to ACR
       inputs:
