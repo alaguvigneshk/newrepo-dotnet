@@ -1,20 +1,53 @@
-containers:
-- name: myapp
-  image: demodotnet.azurecr.io/myapp:29
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: demo
+  labels:
+    app: myapp
 
-  ports:
-  - containerPort: 8080   # ✅ NOT 80
+spec:
+  replicas: 2
 
-  env:
-  - name: ASPNETCORE_URLS
-    value: http://+:8080  # ✅ MATCH PORT
+  selector:
+    matchLabels:
+      app: myapp
 
-  readinessProbe:
-    httpGet:
-      path: /
-      port: 8080
+  template:
+    metadata:
+      labels:
+        app: myapp
 
-  livenessProbe:
-    httpGet:
-      path: /
-      port: 8080
+    spec:
+      containers:
+      - name: myapp
+        image: demodotnet.azurecr.io/myapp:29
+
+        ports:
+        - containerPort: 8080     # ✅ SAFE PORT FOR NON-ROOT
+
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://+:8080    # ✅ MUST MATCH PORT
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
