@@ -5,6 +5,7 @@ metadata:
   namespace: demo
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+
 spec:
   ingressClassName: nginx
 
