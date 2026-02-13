@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: demodotnet.azurecr.io/myapp:latest
+        image: demodotnet.azurecr.io/myapp:28
         ports:
         - containerPort: 80
 
