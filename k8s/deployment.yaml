@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: demodotnet.azurecr.io/myapp:28  
+        image: demodotnet.azurecr.io/myapp:29   # ✅ CORRECT TAG
         ports:
         - containerPort: 80
 
