@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: demodotnet.azurecr.io/myapp:29
+        image: demodotnet.azurecr.io/myapp:41
 
         ports:
         - containerPort: 8080     # ✅ SAFE PORT FOR NON-ROOT
