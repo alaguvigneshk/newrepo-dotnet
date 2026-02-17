@@ -24,11 +24,7 @@ spec:
         image: demodotnet.azurecr.io/myapp:41
 
         ports:
-        - containerPort: 8080
-
-        env:
-        - name: ASPNETCORE_URLS
-          value: http://+:8080
+        - containerPort: 80    # ✅ MATCH REAL CONTAINER PORT
 
         command: ["/bin/sh"]
         args:
@@ -37,11 +33,11 @@ spec:
             echo "Reading secret from Key Vault..."
             API_KEY=$(cat /mnt/secrets/ExternalApiKey)
 
-            echo "Replacing placeholder..."
+            echo "Replacing placeholder in appsettings.json..."
             sed -i "s|__API_KEY__|$API_KEY|g" /app/appsettings.json
 
-            echo "Starting app..."
-            dotnet MyApp.dll
+            echo "Starting application..."
+            dotnet dotnet-folder.dll   # ✅ REAL DLL
 
         volumeMounts:
         - name: secrets-store
@@ -55,6 +51,20 @@ spec:
           limits:
             cpu: "250m"
             memory: "256Mi"
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
 
       volumes:
       - name: secrets-store
