@@ -24,11 +24,29 @@ spec:
         image: demodotnet.azurecr.io/myapp:41
 
         ports:
-        - containerPort: 8080     # ✅ SAFE PORT FOR NON-ROOT
+        - containerPort: 8080
 
         env:
         - name: ASPNETCORE_URLS
-          value: http://+:8080    # ✅ MUST MATCH PORT
+          value: http://+:8080
+
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "Reading secret from Key Vault..."
+            API_KEY=$(cat /mnt/secrets/ExternalApiKey)
+
+            echo "Replacing placeholder..."
+            sed -i "s|__API_KEY__|$API_KEY|g" /app/appsettings.json
+
+            echo "Starting app..."
+            dotnet MyApp.dll
+
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets"
+          readOnly: true
 
         resources:
           requests:
@@ -38,16 +56,10 @@ spec:
             cpu: "250m"
             memory: "256Mi"
 
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 20
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: kv-secrets
