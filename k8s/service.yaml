@@ -9,8 +9,7 @@ spec:
     app: myapp
 
   ports:
-  - protocol: TCP
-    port: 80          # ✅ Service Port
-    targetPort: 8080  # ✅ Container Port
+  - port: 80
+    targetPort: 80   
 
   type: ClusterIP
