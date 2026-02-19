@@ -26,7 +26,7 @@ stages:
 
   jobs:
   - job: BuildDocker
-    displayName: Build .NET + Docker + Push
+    displayName: Build .NET + Docker + Trivy Scan + Push
 
     steps:
     - checkout: self
@@ -52,19 +52,36 @@ stages:
       displayName: Publish
 
     - script: |
+        echo "Running Trivy filesystem scan..."
+        trivy fs --severity HIGH,CRITICAL .
+      displayName: Trivy FS Scan
+
+    - script: |
         echo "Building Docker image..."
-        docker build -t $(acrLoginServer)/$(imageName):$(imageTag) .
+        docker build -t $(imageName):$(imageTag) .
       displayName: Docker Build
 
-    # ✅ Secure ACR Login (NO PASSWORDS)
+    - script: |
+        echo "Running Trivy image scan..."
+        trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
+      displayName: Trivy Image Scan
+
     - task: AzureCLI@2
-      displayName: ACR Login
+      displayName: Docker Login to ACR
       inputs:
         azureSubscription: 'Azure-Service-Connection'
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          az acr login --name $(acrName)
+          USERNAME=$(az acr credential show --name $(acrName) --query username -o tsv)
+          PASSWORD=$(az acr credential show --name $(acrName) --query passwords[0].value -o tsv)
+
+          docker login $(acrLoginServer) -u $USERNAME -p $PASSWORD
+
+    - script: |
+        echo "Tagging image for ACR..."
+        docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
+      displayName: Tag Image
 
     - script: |
         echo "Pushing image to ACR..."
@@ -82,7 +99,6 @@ stages:
     displayName: Kubernetes Deployment
 
     steps:
-
     - task: AzureCLI@2
       displayName: Connect to AKS
       inputs:
@@ -99,15 +115,17 @@ stages:
 
           kubectl get nodes
 
-    # ✅ Automatic Image Tag Injection
+    # ✅ ONLY ADDITION — Automatic Image Tag Injection
     - script: |
-        echo "Injecting image tag into deployment..."
+        echo "Injecting Build ID into deployment..."
         sed -i "s|__IMAGE_TAG__|$(Build.BuildId)|g" k8s/deployment.yaml
       displayName: Inject Image Tag
 
     - script: |
-        echo "Deploying application..."
+        echo "Creating namespace (safe)..."
         kubectl apply -f k8s/namespace.yaml
+
+        echo "Deploying application..."
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
         kubectl apply -f k8s/ingress.yaml
