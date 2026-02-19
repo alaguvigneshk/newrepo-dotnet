@@ -25,7 +25,10 @@ spec:
       - name: myapp
         image: demodotnet.azurecr.io/myapp:__IMAGE_TAG__
 
-        # ⭐⭐⭐ CRITICAL FIX — Tell ASP.NET which port to use
+        # ⭐⭐⭐ RUN CONTAINER AS ROOT
+        securityContext:
+          runAsUser: 0
+
         env:
         - name: ASPNETCORE_URLS
           value: http://+:8080
@@ -62,3 +65,21 @@ spec:
         readinessProbe:
           httpGet:
             path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: kv-secrets
