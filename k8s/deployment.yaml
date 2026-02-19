@@ -21,10 +21,10 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: demodotnet.azurecr.io/myapp:61
+        image: demodotnet.azurecr.io/myapp:latest   # ✅ IMPORTANT CHANGE
 
         ports:
-        - containerPort: 80    # ✅ MATCH REAL CONTAINER PORT
+        - containerPort: 80
 
         command: ["/bin/sh"]
         args:
@@ -37,7 +37,7 @@ spec:
             sed -i "s|__API_KEY__|$API_KEY|g" /app/appsettings.json
 
             echo "Starting application..."
-            dotnet dotnet-folder.dll   # ✅ REAL DLL
+            dotnet dotnet-folder.dll
 
         volumeMounts:
         - name: secrets-store
