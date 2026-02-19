@@ -2,17 +2,14 @@ trigger:
 - nonroot
 
 pool:
- name: default
+  name: default
 
 variables:
   buildConfiguration: Release
-  publishDir: publish
   imageName: myapp
   imageTag: $(Build.BuildId)
 
-  acrName: demodotnet
   acrLoginServer: demodotnet.azurecr.io
-
   aksCluster: demo-aks
   aksResourceGroup: Devops
   namespace: demo
@@ -22,11 +19,11 @@ stages:
 # ================= BUILD & PUSH =================
 
 - stage: Build_And_Push
-  displayName: Build, Scan & Push to ACR
+  displayName: Build, Scan & Push Image
 
   jobs:
   - job: BuildDocker
-    displayName: Build .NET + Docker + Trivy Scan + Push
+    displayName: Build .NET + Docker + Scan
 
     steps:
 
@@ -49,40 +46,33 @@ stages:
 
     - script: |
         echo "Publishing application..."
-        dotnet publish --configuration $(buildConfiguration) --output $(publishDir) --no-build
+        dotnet publish --configuration $(buildConfiguration) --output publish --no-build
       displayName: Publish
 
+    # ✅ Trivy filesystem scan (fail on critical issues)
     - script: |
         echo "Running Trivy filesystem scan..."
-        trivy fs --severity HIGH,CRITICAL .
+        trivy fs --exit-code 1 --severity HIGH,CRITICAL .
       displayName: Trivy FS Scan
 
+    # ✅ Secure ACR login via service connection
+    - task: Docker@2
+      displayName: Login to ACR
+      inputs:
+        command: login
+        containerRegistry: 'Azure-Service-Connection'
+
+    # ✅ Build image directly with ACR name
     - script: |
         echo "Building Docker image..."
-        docker build -t $(imageName):$(imageTag) .
+        docker build -t $(acrLoginServer)/$(imageName):$(imageTag) .
       displayName: Docker Build
 
+    # ✅ Trivy image scan (block vulnerable images)
     - script: |
-        echo "Running Trivy image scan..."
-        trivy image --scanners vuln --severity HIGH,CRITICAL $(imageName):$(imageTag)
+        echo "Scanning Docker image..."
+        trivy image --exit-code 1 --severity HIGH,CRITICAL $(acrLoginServer)/$(imageName):$(imageTag)
       displayName: Trivy Image Scan
-
-    - task: AzureCLI@2
-      displayName: Docker Login to ACR
-      inputs:
-        azureSubscription: 'Azure-Service-Connection'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          USERNAME=$(az acr credential show --name $(acrName) --query username -o tsv)
-          PASSWORD=$(az acr credential show --name $(acrName) --query passwords[0].value -o tsv)
-
-          docker login $(acrLoginServer) -u $USERNAME -p $PASSWORD
-
-    - script: |
-        echo "Tagging image for ACR..."
-        docker tag $(imageName):$(imageTag) $(acrLoginServer)/$(imageName):$(imageTag)
-      displayName: Tag Image
 
     - script: |
         echo "Pushing image to ACR..."
@@ -98,7 +88,7 @@ stages:
 
   jobs:
   - job: Deploy
-    displayName: Kubernetes Deployment
+    displayName: Update Kubernetes Deployment
 
     steps:
 
@@ -118,12 +108,23 @@ stages:
 
           kubectl get nodes
 
+    # ✅ Ensure namespace exists
     - script: |
-        echo "Creating namespace (safe)..."
         kubectl apply -f k8s/namespace.yaml
+      displayName: Ensure Namespace
 
-        echo "Deploying application..."
-        kubectl apply -f k8s/deployment.yaml
-        kubectl apply -f k8s/service.yaml
-        kubectl apply -f k8s/ingress.yaml
-      displayName: Deploy to Kubernetes
+    # ✅ Apply manifests (safe)
+    - script: |
+        kubectl apply -f k8s/ -n $(namespace)
+      displayName: Apply Manifests
+
+    # ✅ CRITICAL: Update image dynamically (proper CI/CD)
+    - script: |
+        echo "Updating deployment image..."
+
+        kubectl set image deployment/myapp \
+          myapp=$(acrLoginServer)/$(imageName):$(imageTag) \
+          -n $(namespace)
+
+        kubectl rollout status deployment/myapp -n $(namespace)
+      displayName: Update Image
