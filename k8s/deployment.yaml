@@ -19,11 +19,16 @@ spec:
         app: myapp
 
     spec:
-      serviceAccountName: myapp-sa   # ⭐⭐⭐ CRITICAL FIX
+      serviceAccountName: myapp-sa
 
       containers:
       - name: myapp
         image: demodotnet.azurecr.io/myapp:__IMAGE_TAG__
+
+        # ⭐⭐⭐ CRITICAL FIX — Tell ASP.NET which port to use
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://+:8080
 
         ports:
         - containerPort: 8080
@@ -57,21 +62,3 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 20
-
-      volumes:
-      - name: secrets-store
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: kv-secrets
