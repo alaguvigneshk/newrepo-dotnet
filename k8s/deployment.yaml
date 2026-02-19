@@ -19,9 +19,11 @@ spec:
         app: myapp
 
     spec:
+      serviceAccountName: myapp-sa   # ⭐⭐⭐ CRITICAL FIX
+
       containers:
       - name: myapp
-        image: demodotnet.azurecr.io/myapp:latest   # ✅ IMPORTANT CHANGE
+        image: demodotnet.azurecr.io/myapp:latest
 
         ports:
         - containerPort: 80
