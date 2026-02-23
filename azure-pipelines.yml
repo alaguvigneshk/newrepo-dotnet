@@ -41,7 +41,7 @@ stages:
     # ✅ FIXED SERVICE CONNECTION NAME (CRITICAL CHANGE)
     - task: SonarQubePrepare@5
       inputs:
-        SonarQube: 'sonarcloud'
+        SonarQube: 'sonarqube'
         scannerMode: 'MSBuild'
         projectKey: 'alagudevopsdemo_devopsdemo'
         projectName: 'devopsdemo'
@@ -56,9 +56,9 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    - task: SonarCloudAnalyze@5
+    - task: SonarQubeAnalyze@5
 
-    - task: SonarCloudPublish@5
+    - task: SonarQubePublish@5
       inputs:
         pollingTimeoutSec: '300'
 
