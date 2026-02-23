@@ -29,12 +29,23 @@ stages:
     displayName: Build .NET + Docker + Trivy Scan + Push
 
     steps:
+
     - checkout: self
+      fetchDepth: 0   # ✅ REQUIRED FOR SONARCLOUD
 
     - task: UseDotNet@2
       inputs:
         packageType: sdk
         version: 8.0.x
+
+    # ✅ SONARCLOUD PREPARE (MUST BE BEFORE BUILD)
+    - task: SonarCloudPrepare@1
+      inputs:
+        SonarCloud: 'SonarCloud'   # ⚠️ MUST MATCH SERVICE CONNECTION NAME
+        organization: 'alagudevopsdemo'
+        scannerMode: 'MSBuild'
+        projectKey: 'alagudevopsdemo_devopsdemo'
+        projectName: 'devopsdemo'
 
     - script: |
         echo "Restoring dependencies..."
@@ -45,6 +56,14 @@ stages:
         echo "Building solution..."
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
+
+    # ✅ SONARCLOUD ANALYZE (MUST BE AFTER BUILD)
+    - task: SonarCloudAnalyze@1
+
+    # ✅ QUALITY GATE (OPTIONAL BUT RECOMMENDED)
+    - task: SonarCloudPublish@1
+      inputs:
+        pollingTimeoutSec: '300'
 
     - script: |
         echo "Publishing application..."
@@ -99,6 +118,7 @@ stages:
     displayName: Kubernetes Deployment
 
     steps:
+
     - task: AzureCLI@2
       displayName: Connect to AKS
       inputs:
@@ -115,7 +135,6 @@ stages:
 
           kubectl get nodes
 
-    # ✅ ONLY ADDITION — Automatic Image Tag Injection
     - script: |
         echo "Injecting Build ID into deployment..."
         sed -i "s|__IMAGE_TAG__|$(Build.BuildId)|g" k8s/deployment.yaml
