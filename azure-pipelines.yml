@@ -38,10 +38,11 @@ stages:
         packageType: sdk
         version: 8.0.x
 
-    # ✅ SonarQube Cloud Prepare
-    - task: SonarQubePrepare@4
+    # ✅ CORRECT TASK FOR SONARCLOUD
+    - task: SonarCloudPrepare@1
       inputs:
-        SonarQube: 'sonarqube'   # ⚠ MUST MATCH SERVICE CONNECTION NAME EXACTLY
+        SonarCloud: 'sonarqube'          # MUST MATCH SERVICE CONNECTION NAME
+        organization: 'alagudevopsdemo'
         scannerMode: 'MSBuild'
         projectKey: 'alagudevopsdemo_devopsdemo'
         projectName: 'devopsdemo'
@@ -56,11 +57,11 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    # ✅ SonarQube Analysis
-    - task: SonarQubeAnalyze@4
+    # ✅ CORRECT TASK
+    - task: SonarCloudAnalyze@1
 
-    # ✅ Quality Gate
-    - task: SonarQubePublish@4
+    # ✅ CORRECT TASK
+    - task: SonarCloudPublish@1
       inputs:
         pollingTimeoutSec: '300'
 
