@@ -43,7 +43,7 @@ stages:
       inputs:
         SonarCloud: 'sonarqube'          # MUST MATCH SERVICE CONNECTION NAME
         organization: 'alagudevopsdemo'
-        scannerMode: 'MSBuild'
+        scannerMode: 'dotnet'
         projectKey: 'alagudevopsdemo_devopsdemo'
         projectName: 'devopsdemo'
 
