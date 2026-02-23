@@ -38,10 +38,10 @@ stages:
         packageType: sdk
         version: 8.0.x
 
-    # ✅ FIXED TASK NAME (SonarQube Cloud)
+    # ✅ FIXED SERVICE CONNECTION NAME (CRITICAL CHANGE)
     - task: SonarQubePrepare@5
       inputs:
-        SonarQube: 'SonarQube Cloud'   # ⚠️ MUST MATCH SERVICE CONNECTION NAME
+        SonarQube: 'sonarcloud'
         scannerMode: 'MSBuild'
         projectKey: 'alagudevopsdemo_devopsdemo'
         projectName: 'devopsdemo'
@@ -56,10 +56,8 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    # ✅ FIXED TASK NAME
     - task: SonarQubeAnalyze@5
 
-    # ✅ FIXED TASK NAME (Optional but recommended)
     - task: SonarQubePublish@5
       inputs:
         pollingTimeoutSec: '300'
