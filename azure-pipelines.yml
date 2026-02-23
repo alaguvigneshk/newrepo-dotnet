@@ -39,7 +39,7 @@ stages:
         version: 8.0.x
 
     # ✅ SonarQube Cloud Prepare
-    - task: SonarQubePrepare@1
+    - task: SonarQubePrepare@4
       inputs:
         SonarQube: 'sonarqube'   # ⚠ MUST MATCH SERVICE CONNECTION NAME EXACTLY
         scannerMode: 'MSBuild'
@@ -57,10 +57,10 @@ stages:
       displayName: Build
 
     # ✅ SonarQube Analysis
-    - task: SonarQubeAnalyze@1
+    - task: SonarQubeAnalyze@4
 
     # ✅ Quality Gate
-    - task: SonarQubePublish@1
+    - task: SonarQubePublish@4
       inputs:
         pollingTimeoutSec: '300'
 
