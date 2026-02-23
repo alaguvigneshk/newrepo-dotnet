@@ -31,17 +31,17 @@ stages:
     steps:
 
     - checkout: self
-      fetchDepth: 0   # ✅ REQUIRED FOR SONAR
+      fetchDepth: 0
 
     - task: UseDotNet@2
       inputs:
         packageType: sdk
         version: 8.0.x
 
-    # ✅ FIXED SERVICE CONNECTION NAME (CRITICAL CHANGE)
+    # ✅ SonarQube Cloud Prepare
     - task: SonarQubePrepare@5
       inputs:
-        SonarQube: 'sonarqube'
+        SonarQube: 'sonarqube'   # ⚠ MUST MATCH SERVICE CONNECTION NAME EXACTLY
         scannerMode: 'MSBuild'
         projectKey: 'alagudevopsdemo_devopsdemo'
         projectName: 'devopsdemo'
@@ -56,8 +56,10 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
+    # ✅ SonarQube Analysis
     - task: SonarQubeAnalyze@5
 
+    # ✅ Quality Gate
     - task: SonarQubePublish@5
       inputs:
         pollingTimeoutSec: '300'
