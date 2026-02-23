@@ -56,9 +56,9 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    - task: SonarQubeAnalyze@5
+    - task: SonarCloudAnalyze@5
 
-    - task: SonarQubePublish@5
+    - task: SonarCloudPublish@5
       inputs:
         pollingTimeoutSec: '300'
 
