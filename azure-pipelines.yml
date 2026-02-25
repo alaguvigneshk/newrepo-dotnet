@@ -38,10 +38,10 @@ stages:
         packageType: sdk
         version: 8.0.x
 
-    # ✅ CORRECT TASK FOR SONARCLOUD
+   
     - task: SonarCloudPrepare@4
       inputs:
-        SonarCloud: 'sonarqube'          # MUST MATCH SERVICE CONNECTION NAME
+        SonarCloud: 'sonarqube'         
         organization: 'alagudevopsdemo'
         scannerMode: 'dotnet'
         projectKey: 'alagudevopsdemo_devopsdemo'
@@ -57,10 +57,10 @@ stages:
         dotnet build --configuration $(buildConfiguration) --no-restore
       displayName: Build
 
-    # ✅ CORRECT TASK
+   
     - task: SonarCloudAnalyze@4
 
-    # ✅ CORRECT TASK
+    
     - task: SonarCloudPublish@4
       inputs:
         pollingTimeoutSec: '300'
